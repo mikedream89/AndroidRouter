@@ -28,7 +28,7 @@ ext {
             versionName:'"3.0.3"'
     ]
 
-    isDebugType = true //module
+    isDebugType = false //module
     isPrintLog= false
 
 }

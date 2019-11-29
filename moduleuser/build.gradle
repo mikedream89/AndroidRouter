@@ -27,7 +27,7 @@ android {
         if (!isDebug) {
             resourcePrefix 'user_'
         }
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
                 includeCompileClasspath true
@@ -76,13 +76,13 @@ dependencies {
     implementation rootProject.ext.dependencies.supportv7
     implementation rootProject.ext.dependencies.constraintlayout
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.1'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    androidTestImplementation 'androidx.test:runner:1.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
     api project(':modulebase')
 
 }
 
-preBuild << {
+preBuild {
     String cmd = "sh inrouter/maker/route.sh " + project.getName()
     def cmdResult = cmd.execute().text.trim()
     println cmdResult

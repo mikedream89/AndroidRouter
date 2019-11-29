@@ -1,6 +1,6 @@
 package com.joybar.librouter.utils;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * Created by joybar on 2017/5/3.

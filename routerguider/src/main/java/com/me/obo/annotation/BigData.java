@@ -1,6 +1,6 @@
 package com.me.obo.annotation;
 
-import android.support.annotation.Keep;
+import androidx.annotation.Keep;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

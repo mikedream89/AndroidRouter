@@ -4,20 +4,19 @@ import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
-import com.joybar.compiler.RouterInject;
-import com.joybar.librouter.Router;
-import com.joybar.librouter.Rule;
 import com.joybar.modulebase.application.ApplicationService;
 import com.joybar.moduleshop.application.ShopApplication;
 import com.joybar.moduleuser.application.UserReleaseApplication;
 import com.me.obo.routerguider.RouterGuider;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
-/**
- * Created by obo on 2017/11/28.
- */
+import dalvik.system.DexFile;
 
 public class App extends Application implements ApplicationService {
 
@@ -39,42 +38,58 @@ public class App extends Application implements ApplicationService {
     public void onCreate() {
         super.onCreate();
         RouterGuider.inject(this);
-         initRouterByAnnotation();
-        // OR
-        // initRouterByDynamic();
+
+        initRegister(this);
 
         loadModuleApplicationService();
     }
 
-
-    private void initRouterByAnnotation() {
-        RouterInject.inject("com.joybar.moduleuser.MainActivity");
-        RouterInject.inject("com.joybar.moduleshop.MainActivity");
-        RouterInject.inject("com.joybar.moduleshop.ReceiveParamActivity");
-        RouterInject.inject("com.joybar.moduleshop.FinishWithResultActivity");
-        RouterInject.inject("com.joybar.moduleshop.PostModuleDataActivity");
-    }
-
-    private void initRouterByDynamic() {
-        Router.registerRouters(new Router.RouterTable() {
-            @Override
-            public List<Rule> buildRuleList() {
-                List<Rule> ruleList = new ArrayList<>();
-                ruleList.add(new Rule("user", "main", com.joybar.moduleuser.MainActivity
-                        .class));
-                ruleList.add(new Rule("shop", "main", com.joybar.moduleshop.MainActivity
-                        .class));
-                ruleList.add(new Rule("shop", "receive_param", com.joybar.moduleshop
-                        .ReceiveParamActivity.class));
-                ruleList.add(new Rule("shop", "finish_with_result", com.joybar.moduleshop
-                        .FinishWithResultActivity.class));
-                ruleList.add(new Rule("shop", "post_module_data", com.joybar.moduleshop
-                        .PostModuleDataActivity.class));
-                return ruleList;
+    //注册所有的Activity
+    public void initRegister(Context context) {
+        String ROUTER_MANAGER_PKN = "com.cn.routermanager.helper";
+        String ROUTER_MANAGER_METHOD_NAME = "registerRouter";
+        List<String> classNameList = getClassName(ROUTER_MANAGER_PKN, context);
+        for (String className : classNameList) {
+            try {
+                System.out.println("classFullName=" + className);
+                Class clazz = Class.forName(className);
+                Method method = clazz.getDeclaredMethod(ROUTER_MANAGER_METHOD_NAME);
+                System.out.println("method=" + method);
+                method.invoke(null);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
             }
-        });
+        }
     }
 
+    /**
+     * 获取指定包名下 的所有类
+     * @param packageName
+     * @return
+     */
+    public List<String> getClassName(String packageName, Context context) {
+        List<String> classNameList = new ArrayList<String>();
+        try {
+            DexFile df = new DexFile(context.getPackageCodePath());//通过DexFile查找当前的APK中可执行文件
+            Enumeration<String> enumeration = df.entries();//获取df中的元素  这里包含了所有可执行的类名 该类名包含了包名+类名的方式
+            while (enumeration.hasMoreElements()) {//遍历
+                String className = (String) enumeration.nextElement();
+
+                if (className.contains(packageName)) {//在当前所有可执行的类里面查找包含有该包名的所有类
+                    classNameList.add(className);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return classNameList;
+    }
 
     @Override
     public void loadModuleApplicationService() {

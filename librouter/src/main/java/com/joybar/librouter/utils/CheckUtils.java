@@ -2,10 +2,6 @@ package com.joybar.librouter.utils;
 
 import androidx.annotation.Nullable;
 
-/**
- * Created by joybar on 2017/5/3.
- */
-
 public class CheckUtils {
     public static <T> T checkNotNull(T reference) {
         if (reference == null) {

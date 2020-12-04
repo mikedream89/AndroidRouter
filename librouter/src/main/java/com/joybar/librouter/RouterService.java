@@ -12,10 +12,6 @@ import com.joybar.librouter.utils.CheckUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by joybar on 12/11/2017.
- */
-
 public class RouterService implements IRouterManagerService {
 
     private RouterRequest routerRequest;

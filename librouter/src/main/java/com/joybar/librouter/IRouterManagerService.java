@@ -7,10 +7,6 @@ import android.os.Bundle;
 import com.joybar.librouter.interceptor.RouteInterceptor;
 
 
-/**
- * Created by joybar on 12/11/2017.
- */
-
 public interface IRouterManagerService {
 
     IRouterManagerService buildRule(Rule rule);

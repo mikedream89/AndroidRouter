@@ -18,9 +18,6 @@ import com.me.obo.annotation.BigData;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 
-/**
- * Created by obo on 2017/11/23.
- */
 @Keep
 public class RouterGuider {
 

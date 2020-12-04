@@ -57,7 +57,6 @@ public class ReceiveParamActivity extends AppCompatActivity {
         int id = mExtras.getInt("id", 0);
         String name = mExtras.getString("name", "");
         tvDes.setText(tvDes.getText().toString()+"\n"+"Receive data :ID:" + id + "," + "name:" + name);
-
     }
 
 }

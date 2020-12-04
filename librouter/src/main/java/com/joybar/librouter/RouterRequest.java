@@ -2,10 +2,6 @@ package com.joybar.librouter;
 
 import android.os.Bundle;
 
-/**
- * Created by joybar on 12/11/2017.
- */
-
 public class RouterRequest {
 
     private Rule rule;

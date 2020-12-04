@@ -2,14 +2,9 @@ package com.joybar.compiler;
 
 import com.google.auto.service.AutoService;
 import com.joybar.annotation.RegisterRouter;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,21 +12,19 @@ import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-/**
- * Created by joybar on 04/11/2017.
- */
 @AutoService(Processor.class)
 public class RouterProcessor extends AbstractProcessor {
-
+    private Messager mMessager;
     private Filer mFiler;
     private Map<RouterModel, String> mStaticRouterMap = new HashMap<>();
 
@@ -39,6 +32,7 @@ public class RouterProcessor extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         mFiler = processingEnv.getFiler();
+        mMessager = processingEnv.getMessager();
     }
 
     @Override
@@ -46,17 +40,17 @@ public class RouterProcessor extends AbstractProcessor {
         mStaticRouterMap.clear();
         for (TypeElement element : annotations) {
             if (element.getQualifiedName().toString().equals(RegisterRouter.class.getCanonicalName())) {
-              //  processRouterMap1(element, roundEnv);
-                try {
-                    processRouterMap2(element, roundEnv);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                processRouterMap1(element, roundEnv);
             }
         }
         return false;
     }
 
+    /**
+     * 声明注解处理器要处理的注解
+     *
+     * @return
+     */
     @Override
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> set = new HashSet<>();
@@ -64,9 +58,14 @@ public class RouterProcessor extends AbstractProcessor {
         return set;
     }
 
+    /**
+     * 声明注解处理器支持的java版本
+     *
+     * @return
+     */
     @Override
     public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.latestSupported();
+        return processingEnv.getSourceVersion();
     }
 
 
@@ -80,9 +79,10 @@ public class RouterProcessor extends AbstractProcessor {
             String module = typeElement.getAnnotation(RegisterRouter.class).module();
             String path = typeElement.getAnnotation(RegisterRouter.class).path();
             String classFullName = typeElement.getQualifiedName().toString();
-            System.out.println("module=" + module);
-            System.out.println("path=" + path);
-            System.out.println("classFullName=" + classFullName);
+            mMessager.printMessage(Diagnostic.Kind.NOTE, "类名和包名：" + classFullName);
+            mMessager.printMessage(Diagnostic.Kind.NOTE, "path(注解中的path):" + path);
+            mMessager.printMessage(Diagnostic.Kind.NOTE, "module名称:" + module);
+
             if (mStaticRouterMap.get(new RouterModel(module, path)) == null) {
                 mStaticRouterMap.put(new RouterModel(module, path), classFullName);
             }
@@ -91,7 +91,6 @@ public class RouterProcessor extends AbstractProcessor {
     }
 
     private void writeComponentFile() {
-
         for (Map.Entry<RouterModel, String> entry : mStaticRouterMap.entrySet()) {
             String module = entry.getKey().module;
             String path = entry.getKey().path;
@@ -108,90 +107,36 @@ public class RouterProcessor extends AbstractProcessor {
             PrintWriter printWriter = null;
             try {
                 printWriter = new PrintWriter(javaFileObject.openWriter());
+                printWriter.println("package " + Config.ROUTER_MANAGER_PKN + ";");
+                printWriter.println("import android.app.Activity;");
+                printWriter.println("import android.app.Service;");
+                printWriter.println("import android.content.BroadcastReceiver;");
+                printWriter.println("public class " + createClassName + " {");
+                printWriter.println("public static void " + Config.ROUTER_MANAGER_METHOD_NAME + "() {");
+                printWriter.println("com.joybar.librouter.Router.registerRouter"
+                        + "(\"" + module
+                        + "\", "
+                        + "\"" + path
+                        + "\", "
+                        + className + ".class"
+                        + ");");
+
+                printWriter.println("}");
+                printWriter.println("}");
+                printWriter.flush();
+                printWriter.close();
             } catch (IOException e) {
                 e.printStackTrace();
                 return;
+            } finally {
+                if (printWriter != null) {
+                    printWriter.flush();
+                    printWriter.close();
+                }
             }
-            printWriter.println("package " + Config.ROUTER_MANAGER_PKN + ";");
-            printWriter.println("import android.app.Activity;");
-            printWriter.println("import android.app.Service;");
-            printWriter.println("import android.content.BroadcastReceiver;");
-            printWriter.println("public class " + createClassName + " {");
-            printWriter.println("public static void "+Config.ROUTER_MANAGER_METHOD_NAME+"() {");
-            printWriter.println("com.joybar.librouter.Router.registerRouter"
-                    + "(\"" + module
-                    + "\", "
-                    + "\"" + path
-                    + "\", "
-                    + className + ".class" +
-                    ");");
 
-            printWriter.println("}");
-            printWriter.println("}");
-            printWriter.flush();
-            printWriter.close();
         }
     }
-
-
-    private void processRouterMap2(TypeElement element, RoundEnvironment roundEnv) throws IOException {
-
-        Set<? extends Element> routerElements = roundEnv.getElementsAnnotatedWith(RegisterRouter.class);
-        for (Element e : routerElements) {
-            if (!(e instanceof TypeElement)) {
-                continue;
-            }
-            TypeElement typeElement = (TypeElement) e;
-            String module =typeElement.getAnnotation(RegisterRouter.class).module();
-            String path = typeElement.getAnnotation(RegisterRouter.class).path();
-            String fullName = typeElement.getQualifiedName().toString();
-
-            System.out.println("element.getQualifiedName=" + typeElement.getQualifiedName());
-            System.out.println("fullName=" + fullName);
-            System.out.println("element.getSimpleName=" + element.getSimpleName());
-            System.out.println("module=" + module);
-            System.out.println("path=" + path);
-
-
-            MethodSpec main = MethodSpec.methodBuilder("main")
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                    .returns(void.class)
-                    .addParameter(String[].class, "args")
-                    .addStatement("$T.out.println($S)", System.class, "Hello, JavaPoet!")
-                    .build();
-
-            MethodSpec addRouter = computeAddRouter(Config.ROUTER_MANAGER_METHOD_NAME,module, path, typeElement.getQualifiedName().toString());
-            TypeSpec routerManger = TypeSpec.classBuilder(fullName.replace(".", "_") + Config.ROUTER_MANAGER_CLASS_NAME_SUFFIX)
-                    .addModifiers(Modifier.PUBLIC)
-                    .addMethod(main)
-                    .addMethod(addRouter)
-                    .build();
-            JavaFile javaFile = JavaFile.builder(Config.ROUTER_MANAGER_PKN, routerManger)
-                    .build();
-            javaFile.writeTo(mFiler);
-
-        }
-
-    }
-
-    private MethodSpec computeAddRouter(String methodName, String module, String path, String classFullName) {
-
-        classFullName = classFullName + ".class";
-        Date d = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return MethodSpec.methodBuilder(methodName)
-                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .addComment("This class was generated automatically "+sdf.format(d))
-                .returns(void.class)
-                .addStatement("com.joybar.librouter.Router.registerRouter"
-                        + "(\"" + module + "\","
-                        + "\"" + path + "\","
-                        + classFullName
-                        + ")")
-                .build();
-
-    }
-
 
     public static class RouterModel {
         String module;

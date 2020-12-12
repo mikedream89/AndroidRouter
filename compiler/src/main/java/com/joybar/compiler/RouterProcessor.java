@@ -111,8 +111,10 @@ public class RouterProcessor extends AbstractProcessor {
                 printWriter.println("import android.app.Activity;");
                 printWriter.println("import android.app.Service;");
                 printWriter.println("import android.content.BroadcastReceiver;");
-                printWriter.println("public class " + createClassName + " {");
-                printWriter.println("public static void " + Config.ROUTER_MANAGER_METHOD_NAME + "() {");
+                printWriter.println("import com.joybar.librouter.IRouter;");
+                printWriter.println("public class " + createClassName + " implements IRouter {");
+                printWriter.println("@Override");
+                printWriter.println("public void " + Config.ROUTER_MANAGER_METHOD_NAME + "() {");
                 printWriter.println("com.joybar.librouter.Router.registerRouter"
                         + "(\"" + module
                         + "\", "
@@ -136,6 +138,10 @@ public class RouterProcessor extends AbstractProcessor {
             }
 
         }
+    }
+
+    private void writeComponentFileJavapoet(){
+
     }
 
     public static class RouterModel {

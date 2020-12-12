@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
+import com.joybar.librouter.IRouter;
 import com.joybar.modulebase.application.ApplicationService;
 import com.joybar.moduleshop.application.ShopApplication;
 import com.joybar.moduleuser.application.UserReleaseApplication;
@@ -53,9 +54,13 @@ public class App extends Application implements ApplicationService {
             try {
                 System.out.println("classFullName=" + className);
                 Class clazz = Class.forName(className);
+                //确定此 类对象表示的类或接口是否与指定的 类参数表示的类或接口相同，或者是它的超类或超接口
+                if(!IRouter.class.isAssignableFrom(clazz)){
+                    continue;
+                }
                 Method method = clazz.getDeclaredMethod(ROUTER_MANAGER_METHOD_NAME);
                 System.out.println("method=" + method);
-                method.invoke(null);
+                method.invoke(clazz);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (NoSuchMethodException e) {
@@ -79,8 +84,7 @@ public class App extends Application implements ApplicationService {
             DexFile df = new DexFile(context.getPackageCodePath());//通过DexFile查找当前的APK中可执行文件
             Enumeration<String> enumeration = df.entries();//获取df中的元素  这里包含了所有可执行的类名 该类名包含了包名+类名的方式
             while (enumeration.hasMoreElements()) {//遍历
-                String className = (String) enumeration.nextElement();
-
+                String className = enumeration.nextElement();
                 if (className.contains(packageName)) {//在当前所有可执行的类里面查找包含有该包名的所有类
                     classNameList.add(className);
                 }
